@@ -54,7 +54,7 @@ export default function ProviderColumn({
 									<span className="provider-name">{p.name && p.name !== p.id ? `${p.id} — ${p.name}` : p.id}</span>
 								</div>
 								<div className="provider-meta">
-									{p.models.length} models · {p.apiKeySet ? "key 已设置" : "key 未设置"} · {p.api || "未知 API"}
+									{p.models.length} models · {p.apiKeySet ? `key 已设置（${p.apiKeyMasked}）` : "key 未设置"} · {p.api || "未知 API"}
 								</div>
 							</div>
 							<div className="row-actions" onClick={(event) => event.stopPropagation()}>

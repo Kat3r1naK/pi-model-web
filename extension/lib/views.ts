@@ -9,6 +9,12 @@ function readCost(model: JsonObject): JsonObject {
 	return isObject(model.cost) ? model.cost : {};
 }
 
+/** 掩码 key：前 8 后 4，中间省略号；过短则只显示前 4，不泄露完整值 */
+function maskApiKey(key: string): string {
+	if (key.length <= 12) return `${key.slice(0, 4)}…`;
+	return `${key.slice(0, 8)}…${key.slice(-4)}`;
+}
+
 function safeAdvancedObject(value: unknown): JsonObject {
 	if (!isObject(value)) return {};
 	return { ...value };
@@ -65,6 +71,10 @@ export function publicConfig(config: ModelsConfig, filePath: string): JsonObject
 			oauth: provider.oauth === "radius" ? "radius" : "",
 			authHeader: provider.authHeader === true,
 			apiKeySet: typeof provider.apiKey === "string" && provider.apiKey.length > 0,
+			apiKeyMasked:
+				typeof provider.apiKey === "string" && provider.apiKey.length > 0
+					? maskApiKey(provider.apiKey)
+					: "",
 			headersSet: isObject(provider.headers) && Object.keys(provider.headers).length > 0,
 			compat: safeAdvancedObject(provider.compat),
 			modelOverrides: safeModelOverrides(provider.modelOverrides),

@@ -61,6 +61,8 @@ export interface ProviderInfo {
 	oauth: "radius" | "";
 	authHeader: boolean;
 	apiKeySet: boolean;
+	/** 掩码 key（如 sk-6RClt…WJDw），未设置时为空字符串；明文永不下发 */
+	apiKeyMasked: string;
 	headersSet: boolean;
 	compat: Record<string, unknown>;
 	modelOverrides: Record<string, Record<string, unknown>>;

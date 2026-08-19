@@ -140,9 +140,16 @@ export default function ProviderDrawer({ open, provider, onClose, onSaved, onErr
 				<Form.Item
 					label="API Key"
 					name="apiKey"
-					extra={editing && provider?.apiKeySet ? "已保存 key；留空则保留原值" : "支持环境变量引用，如 $OPENAI_KEY"}
-				>
-					<Input.Password autoComplete="new-password" placeholder="留空则保留已有 key" />
+					extra={
+						editing && provider?.apiKeyMasked
+							? `已保存 key（${provider.apiKeyMasked}）；留空则保留原值，填写则替换`
+							: "支持环境变量引用，如 $OPENAI_KEY"
+					}
+					>
+					<Input.Password
+						autoComplete="new-password"
+						placeholder={editing && provider?.apiKeyMasked ? provider.apiKeyMasked : "留空则保留已有 key"}
+					/>
 				</Form.Item>
 				<Form.Item label="自动添加 Authorization: Bearer" name="authHeader" valuePropName="checked">
 					<Switch />
