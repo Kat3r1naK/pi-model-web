@@ -1,0 +1,10 @@
+{
+	"name": "pi-model-web",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"build": "pnpm --dir web build",
+		"smoke": "pnpm --dir extension exec tsx ../scripts/smoke-server.ts"
+	}
+}

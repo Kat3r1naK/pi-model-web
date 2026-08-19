@@ -1,0 +1,15 @@
+{
+	"name": "pi-model-web-extension",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"dependencies": {
+		"koa": "^2.16.1"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-coding-agent": "*",
+		"@types/koa": "^2.15.0",
+		"@types/node": "^24.0.0",
+		"tsx": "^4.23.12"
+	}
+}
