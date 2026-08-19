@@ -1,7 +1,8 @@
 /** Model 编辑抽屉：基础字段 + 高级设置（Thinking / Sampling / Headers / compat）+ 费用 */
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Checkbox, Col, Drawer, Form, Input, InputNumber, Row, Select, Space, Switch } from "antd";
+import { Button, Checkbox, Col, Drawer, Form, Input, InputNumber, message, Row, Select, Space, Switch } from "antd";
 import { useEffect, useMemo, useState } from "react";
+import { getModelMeta } from "../api/model/meta";
 import { saveModel } from "../api/model";
 import type { SaveModelPayload } from "../api/model/types";
 import { API_TYPES, type ModelInfo } from "../api/config/types";
@@ -95,6 +96,7 @@ function collectThinkingMap(
 export default function ModelDrawer({ open, providerId, model, onClose, onSaved, onError }: ModelDrawerProps) {
 	const [form] = Form.useForm();
 	const [saving, setSaving] = useState(false);
+	const [metaLoading, setMetaLoading] = useState(false);
 	const editing = Boolean(model);
 	const thinkingPreset = Form.useWatch("thinkingPreset", form);
 
@@ -139,6 +141,40 @@ export default function ModelDrawer({ open, providerId, model, onClose, onSaved,
 			tiers: model.cost.tiers,
 		});
 	}, [open, model, form]);
+
+	/** Model ID 失焦时查 pi 内置注册表，命中则回填官方参数；编辑时 id 未变不覆盖用户自定义值 */
+	const fetchModelMeta = async (raw: string) => {
+		const id = raw.trim();
+		if (!id || (editing && id === model?.id)) return;
+		setMetaLoading(true);
+		try {
+			const result = await getModelMeta(id);
+			if (!result.found || !result.meta) {
+				message.info("未命中 pi 内置模型注册表，参数需手动填写");
+				return;
+			}
+			const meta = result.meta;
+			const patch: Record<string, unknown> = {};
+			if (meta.contextWindow !== undefined) patch.contextWindow = meta.contextWindow;
+			if (meta.maxTokens !== undefined) patch.maxTokens = meta.maxTokens;
+			if (meta.reasoning !== undefined) patch.reasoning = meta.reasoning;
+			if (meta.thinkingLevelMap && Object.keys(meta.thinkingLevelMap).length) {
+				const thinking = parseThinkingMap(meta.thinkingLevelMap);
+				patch.thinkingPreset = thinking.preset;
+				patch.thinkingRows = thinking.rows;
+			}
+			form.setFieldsValue(patch);
+			const parts = [
+				meta.contextWindow !== undefined ? `上下文 ${meta.contextWindow.toLocaleString()}` : "",
+				meta.maxTokens !== undefined ? `输出 ${meta.maxTokens.toLocaleString()}` : "",
+			].filter(Boolean);
+			message.success(`已从 pi 内置注册表回填${parts.length ? `：${parts.join(" / ")}` : "官方参数"}`);
+		} catch {
+			// 查询失败不阻断填写
+		} finally {
+			setMetaLoading(false);
+		}
+	};
 
 	const handleFinish = async (values: Record<string, unknown>) => {
 		if (!providerId) {
@@ -265,7 +301,11 @@ export default function ModelDrawer({ open, providerId, model, onClose, onSaved,
 				<Row gutter={12}>
 					<Col span={12}>
 						<Form.Item label="Model ID" name="id" rules={[{ required: true, message: "Model ID 不能为空" }]}>
-							<Input placeholder="例如 claude-sonnet-4-5" />
+							<Input
+								placeholder="例如 claude-sonnet-4-5，失焦自动查官方参数"
+								suffix={metaLoading ? "…" : undefined}
+								onBlur={(event) => fetchModelMeta(event.target.value)}
+							/>
 						</Form.Item>
 					</Col>
 					<Col span={12}>

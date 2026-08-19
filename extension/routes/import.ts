@@ -24,12 +24,13 @@ export async function scanCcSwitchRoute(ctx: Context): Promise<void> {
 	ctx.body = { appType, candidates };
 }
 
-/** POST /api/import/cc-switch：导入勾选的配置（key 在服务端直接写入，不下发），附带模型列表 */
+/** POST /api/import/cc-switch：导入勾选的配置（key 在服务端直接写入，不下发），附带模型列表；
+ * contextWindow/maxTokens 优先用 pi 内置注册表的官方值校正 */
 export async function importCcSwitchRoute(ctx: Context, deps: RouteDeps): Promise<void> {
 	const body = getBody(ctx);
 	const appType = parseAppType(body.appType);
 	const ids = Array.isArray(body.ids) ? body.ids.filter((item): item is string => typeof item === "string") : [];
-	const result = await importCcSwitch(appType, ids);
+	const result = await importCcSwitch(appType, ids, deps.getModelMeta);
 	const refreshError = await refreshAfterChange(deps.refreshModels);
 	ctx.body = { ok: true, imported: result.ids, modelCount: result.modelCount, refreshError };
 }

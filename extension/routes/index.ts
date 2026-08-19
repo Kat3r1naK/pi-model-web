@@ -5,6 +5,7 @@ import { getConfigRoute } from "./config";
 import type { RouteDeps } from "./context";
 import { importCcSwitchRoute, scanCcSwitchRoute } from "./import";
 import { deleteModelRoute, saveModelRoute } from "./model";
+import { getModelMetaRoute } from "./model-meta";
 import { getPage } from "./page";
 import { deleteProviderRoute, saveProviderRoute } from "./provider";
 
@@ -24,6 +25,7 @@ const ROUTES: Route[] = [
 	{ method: "POST", path: "/api/provider/delete", handler: deleteProviderRoute },
 	{ method: "POST", path: "/api/model", handler: saveModelRoute },
 	{ method: "POST", path: "/api/model/delete", handler: deleteModelRoute },
+	{ method: "GET", path: "/api/model/meta", handler: getModelMetaRoute },
 	{ method: "GET", path: "/api/import/cc-switch", handler: scanCcSwitchRoute },
 	{ method: "POST", path: "/api/import/cc-switch", handler: importCcSwitchRoute },
 ];

@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { HttpError } from "../lib/errors";
 import { isObject } from "../lib/validate";
 import { updateConfig } from "../config-store";
-import type { JsonObject, ProviderConfig } from "../types";
+import type { GetModelMeta, JsonObject, ProviderConfig } from "../types";
 
 const execFileAsync = promisify(execFile);
 const DB_PATH = join(homedir(), ".cc-switch", "cc-switch.db");
@@ -211,6 +211,25 @@ function buildModelsForProvider(
 		: codexModelsFromSettings(settings, pricingById, codexCatalog);
 }
 
+/** 模型 id 命中 pi 内置注册表时，用官方值覆盖本地估算的上下文/输出/思考参数 */
+function applyModelMeta(models: JsonObject[], getModelMeta: GetModelMeta): JsonObject[] {
+	return models.map((model) => {
+		const meta = getModelMeta(String(model.id));
+		if (!meta) return model;
+		const hasThinkingMap = meta.thinkingLevelMap !== undefined && Object.keys(meta.thinkingLevelMap).length > 0;
+		if (meta.contextWindow === undefined && meta.maxTokens === undefined && meta.reasoning === undefined && !hasThinkingMap) {
+			return model;
+		}
+		return {
+			...model,
+			...(meta.contextWindow !== undefined ? { contextWindow: meta.contextWindow } : {}),
+			...(meta.maxTokens !== undefined ? { maxTokens: meta.maxTokens } : {}),
+			...(meta.reasoning !== undefined ? { reasoning: meta.reasoning } : {}),
+			...(hasThinkingMap ? { thinkingLevelMap: { ...meta.thinkingLevelMap } } : {}),
+		};
+	});
+}
+
 async function queryProviders(appType: ImportAppType): Promise<DbProviderRow[]> {
 	if (!(IMPORT_APP_TYPES as readonly string[]).includes(appType)) {
 		throw new HttpError(400, `不支持的配置类型: ${appType}`);
@@ -317,10 +336,12 @@ function slugify(name: string, fallback: string): string {
 	return slug || fallback;
 }
 
-/** 导入：服务端直接读 key 写入 models.json（key 不经过浏览器），并附带模型列表 */
+/** 导入：服务端直接读 key 写入 models.json（key 不经过浏览器），并附带模型列表；
+ * getModelMeta 命中 pi 内置注册表时用官方值校正 contextWindow/maxTokens */
 export async function importCcSwitch(
 	appType: ImportAppType,
 	ids: string[],
+	getModelMeta?: GetModelMeta,
 ): Promise<{ ids: string[]; modelCount: number }> {
 	if (ids.length === 0) throw new HttpError(400, "请至少选择一个配置");
 	if (ids.length > 50) throw new HttpError(400, "单次最多导入 50 个配置");
@@ -337,7 +358,8 @@ export async function importCcSwitch(
 			const settings = parseSettings(row);
 			const extracted = extractConfig(appType, settings);
 			if (!extracted.apiKey) continue;
-			const models = buildModelsForProvider(appType, settings, pricing, codexCatalog);
+			let models = buildModelsForProvider(appType, settings, pricing, codexCatalog);
+			if (getModelMeta) models = applyModelMeta(models, getModelMeta);
 
 			// 生成不冲突的 provider id：slug + 数字后缀
 			const baseId = slugify(name, `${appType}-provider`);

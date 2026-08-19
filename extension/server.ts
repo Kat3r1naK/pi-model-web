@@ -5,11 +5,13 @@ import { bodyParser } from "./middleware/body-parser";
 import { errorHandler } from "./middleware/error-handler";
 import { securityHeaders } from "./middleware/security-headers";
 import { router } from "./routes";
-import type { RefreshModels } from "./types";
+import type { GetModelMeta, RefreshModels } from "./types";
 
 export interface AppDeps {
 	token: string;
 	refreshModels: RefreshModels;
+	/** 按模型 id 查 pi 内置注册表元数据（导入时校正上下文/输出 token） */
+	getModelMeta?: GetModelMeta;
 }
 
 export function createApp(deps: AppDeps): Koa {
@@ -18,6 +20,6 @@ export function createApp(deps: AppDeps): Koa {
 	app.use(securityHeaders());
 	app.use(auth(deps.token));
 	app.use(bodyParser());
-	app.use(router({ refreshModels: deps.refreshModels }));
+	app.use(router({ refreshModels: deps.refreshModels, getModelMeta: deps.getModelMeta }));
 	return app;
 }

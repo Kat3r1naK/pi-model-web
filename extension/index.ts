@@ -19,9 +19,22 @@ async function openBrowser(pi: ExtensionAPI, url: string): Promise<void> {
 
 async function startServer(pi: ExtensionAPI, ctx: ExtensionCommandContext): Promise<{ server: Server; url: string }> {
 	const token = randomBytes(24).toString("hex");
+	// 从 pi 内置模型注册表抓官方参数，供 cc-switch 导入 / 新建模型校正；
+	// 同 id 多 provider 时首个命中优先，官方值一致不影响结果
+	const metaById = new Map<string, { contextWindow?: number; maxTokens?: number; reasoning?: boolean; thinkingLevelMap?: Record<string, string | null> }>();
+	for (const model of ctx.modelRegistry.getAll()) {
+		if (metaById.has(model.id)) continue;
+		metaById.set(model.id, {
+			contextWindow: model.contextWindow,
+			maxTokens: model.maxTokens,
+			reasoning: model.reasoning,
+			thinkingLevelMap: model.thinkingLevelMap ? { ...model.thinkingLevelMap } : undefined,
+		});
+	}
 	const app = createApp({
 		token,
 		refreshModels: () => ctx.modelRegistry.refresh(),
+		getModelMeta: (id) => metaById.get(id),
 	});
 	const server = createServer(app.callback());
 	await new Promise<void>((resolve, reject) => {
