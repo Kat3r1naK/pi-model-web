@@ -359,7 +359,10 @@ export async function importCcSwitch(
 			if (appType === "claude") {
 				provider.api = "anthropic-messages";
 			} else {
-				provider.api = "openai-codex-responses";
+				// codex 只能经 OPENAI_API_KEY 导入（普通 key）；openai-codex-responses
+				// 仅支持 ChatGPT OAuth JWT（会抛 Failed to extract accountId from token），
+				// Responses 协议走 openai-responses 即可
+				provider.api = "openai-responses";
 				provider.authHeader = true;
 			}
 			config.providers[id] = provider;
