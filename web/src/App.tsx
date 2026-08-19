@@ -147,8 +147,11 @@ export default function App() {
 					<ImportCcSwitchModal
 						open={importOpen}
 						onClose={() => setImportOpen(false)}
-						onImported={(count, refreshError) => {
-							notifyResult(`已导入 ${count} 个 provider`, refreshError);
+						onImported={(count, modelCount, refreshError) => {
+							notifyResult(
+								`已导入 ${count} 个 provider${modelCount > 0 ? `，各附带 ${modelCount} 个模型` : ""}`,
+								refreshError,
+							);
 							setImportOpen(false);
 							void load();
 						}}

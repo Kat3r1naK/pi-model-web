@@ -11,6 +11,8 @@ export interface ImportCandidate {
 	/** 是否有可导入的 API Key（chatgpt OAuth 登录态为 false） */
 	hasApiKey: boolean;
 	authMode?: string;
+	/** 导入时会一并带入的模型数量 */
+	modelCount: number;
 }
 
 /** GET 响应 */
@@ -29,5 +31,7 @@ export interface ImportCcSwitchPayload {
 export interface ImportCcSwitchResult {
 	ok: boolean;
 	imported: string[];
+	/** 每个导入的 provider 附带的模型数量 */
+	modelCount: number;
 	refreshError?: string;
 }

@@ -7,7 +7,7 @@ import type { ImportAppType, ImportCandidate } from "../api/import/cc-switch/typ
 interface ImportCcSwitchModalProps {
 	open: boolean;
 	onClose: () => void;
-	onImported: (count: number, refreshError?: string) => void;
+	onImported: (count: number, modelCount: number, refreshError?: string) => void;
 	onError: (message: string) => void;
 }
 
@@ -63,7 +63,7 @@ export default function ImportCcSwitchModal({ open, onClose, onImported, onError
 		setImporting(true);
 		try {
 			const result = await importCcSwitch({ appType, ids: selected });
-			onImported(result.imported.length, result.refreshError);
+			onImported(result.imported.length, result.modelCount, result.refreshError);
 		} catch (error) {
 			onError(error instanceof Error ? error.message : String(error));
 		} finally {
@@ -136,7 +136,7 @@ export default function ImportCcSwitchModal({ open, onClose, onImported, onError
 										)}
 									</div>
 									<div className="import-item-meta">
-										{candidate.baseUrl ?? "使用默认地址"} · 导入后 provider id 自动生成
+										{candidate.baseUrl ?? "使用默认地址"} · 附带 {candidate.modelCount} 个模型
 									</div>
 								</div>
 							</label>
@@ -148,7 +148,7 @@ export default function ImportCcSwitchModal({ open, onClose, onImported, onError
 			<Alert
 				type="info"
 				showIcon
-				message={`导入映射：Claude → anthropic-messages，Codex → openai-codex-responses；同名自动加数字后缀`}
+				message="导入内容：连接信息 + API Key + 模型列表（取自各配置自带的模型设置，价格按定价表补充）；provider id 同名自动加数字后缀"
 				style={{ marginTop: 12 }}
 			/>
 		</Modal>
